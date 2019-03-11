@@ -30,7 +30,40 @@ test('Should signup a new user', async () => {
   });
   expect(user.password).not.toBe('letsgotomars');
 
-  expect(response.body.toke);
+  expect(response.body.token);
+});
+
+test('Should not signup a user with invalid name', async () => {
+  const response = await request(app)
+    .post('/users')
+    .send({
+      name: '',
+      email: 'elon@spacex.com',
+      password: 'letsgotomars'
+    })
+    .expect(400);
+});
+
+test('Should not signup a user with invalid email', async () => {
+  const response = await request(app)
+    .post('/users')
+    .send({
+      name: 'Elon',
+      email: 'elonspacex.com',
+      password: 'letsgotomars'
+    })
+    .expect(400);
+});
+
+test('Should not signup a user with invalid password', async () => {
+  const response = await request(app)
+    .post('/users')
+    .send({
+      name: 'Elon',
+      email: 'elon@spacex.com',
+      password: 'lets'
+    })
+    .expect(400);
 });
 
 test('Should login existing user', async () => {
@@ -46,8 +79,8 @@ test('Should login existing user', async () => {
   expect(response.body.token).toBe(user.tokens[1].token);
 });
 
-test('Should not login non-existent user', () => {
-  request(app)
+test('Should not login non-existent user', async () => {
+  await request(app)
     .post('/users/login')
     .send({
       email: userOne.email,
@@ -64,8 +97,8 @@ test('Should get profile for user', async () => {
     .expect(200);
 });
 
-test('Should not get profile for unauthenticated user', () => {
-  request(app)
+test('Should not get profile for unauthenticated user', async () => {
+  await request(app)
     .delete('/users/me')
     .send()
     .expect(401);
@@ -82,8 +115,8 @@ test('Should delete account for user', async () => {
   expect(user).toBeNull();
 });
 
-test('Should not delete account for unauthenticated user', () => {
-  request(app)
+test('Should not delete account for unauthenticated user', async () => {
+  await request(app)
     .delete('/users/me')
     .send()
     .expect(401);
@@ -109,20 +142,41 @@ test('Should update valid user field', async () => {
   expect(user.name).toEqual('George');
 });
 
-test('Should not update invalid user field', () => {
-  request(app)
+test('Should not update invalid user field', async () => {
+  await request(app)
     .patch('/users/me')
     .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
     .send({ location: 'Mordor' })
     .expect(400);
 });
 
-// test('Should not login non-existent user', async () => {
-//   await request(app)
-//     .post('/users/login')
-//     .send({
-//       email: 'asdiojfiewj@kfejklw.efa',
-//       password: 'jfoiewjfowae'
-//     })
-//     .expect(400);
-// });
+test('Should not update user with invalid name', async () => {
+  await request(app)
+    .patch('/users/me')
+    .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
+    .send({ name: '' })
+    .expect(400);
+});
+
+test('Should not update user with invalid email', async () => {
+  await request(app)
+    .patch('/users/me')
+    .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
+    .send({ email: 'jiofawefj' })
+    .expect(400);
+});
+
+test('Should not update user with invalid password', async () => {
+  await request(app)
+    .patch('/users/me')
+    .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
+    .send({ password: 'eijfsadovhjepasswordfjioeravjiao' })
+    .expect(400);
+});
+
+test('Should not update invalid user if unauthenticated', async () => {
+  await request(app)
+    .patch('/users/me')
+    .send({ name: 'John' })
+    .expect(401);
+});

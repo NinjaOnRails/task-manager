@@ -33,9 +33,18 @@ test('Should fetch user tasks', async () => {
   expect(response.body.length).toEqual(2);
 });
 
+test('Should fetch user task by id', async () => {
+  const response = await request(app)
+    .get(`/tasks/${taskOne._id}`)
+    .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
+    .send()
+    .expect(200);
+  expect(response.body._id).toEqual(taskOne._id);
+});
+
 test('Should delete user task', async () => {
-  request(app)
-    .delete(`tasks/${taskOne._id}`)
+  await request(app)
+    .delete(`/tasks/${taskOne._id}`)
     .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
     .send()
     .expect(200);
@@ -44,16 +53,26 @@ test('Should delete user task', async () => {
 });
 
 test("Should not delete other users' tasks", async () => {
-  request(app)
-    .delete(`tasks/${taskOne._id}`)
+  await request(app)
+    .delete(`/tasks/${taskOne._id}`)
     .set('Authorization', `Bearer ${userTwo.tokens[0].token}`)
     .send()
     .expect(404);
-  const task = await Task.findById(taskOne._id);
-  expect(task).not.toBeNull();
+  // const task = await Task.findById(taskOne._id);
+  // expect(task).not.toBeNull();
+  // console.log(task);
 });
 
-test('Should not create task with invalid description', () => {
+test('Should not delete task if unathenticated', async () => {
+  request(app)
+    .delete(`/tasks/${taskOne._id}`)
+    .send()
+    .expect(401);
+  // const task = await Task.findById(taskOne._id);
+  // expect(task).not.toBeNull();
+});
+
+test('Should not create task with invalid description', async () => {
   request(app)
     .post('/tasks')
     .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
@@ -61,10 +80,20 @@ test('Should not create task with invalid description', () => {
     .expect(400);
 });
 
-test('Should not create task with invalid completed', () => {
+test('Should not create task with invalid completed', async () => {
   request(app)
     .post('/tasks')
     .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
     .send({ completed: 1 })
     .expect(400);
+});
+
+test("Should not update other useres' task", async () => {
+  request(app)
+    .patch(`tasks/${taskOne._id}`)
+    .set('Authorization', `Bearer ${userTwo.tokens[0].token}`)
+    .send({ completed: true })
+    .expect(404);
+  const task = await Task.findById(taskOne._id);
+  expect(task.completed).toEqual(false);
 });
