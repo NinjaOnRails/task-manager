@@ -28,13 +28,13 @@ test('Should signup a new user', async () => {
     },
     token: user.tokens[0].token
   });
-  expect(user.password).not.toBe('letsgotomars');
+  expect(user.password).not.toEqual('letsgotomars');
 
   expect(response.body.token);
 });
 
 test('Should not signup a user with invalid name', async () => {
-  const response = await request(app)
+  await request(app)
     .post('/users')
     .send({
       name: '',
@@ -42,10 +42,11 @@ test('Should not signup a user with invalid name', async () => {
       password: 'letsgotomars'
     })
     .expect(400);
+  expect(await User.length).toEqual(3);
 });
 
 test('Should not signup a user with invalid email', async () => {
-  const response = await request(app)
+  await request(app)
     .post('/users')
     .send({
       name: 'Elon',
@@ -53,10 +54,11 @@ test('Should not signup a user with invalid email', async () => {
       password: 'letsgotomars'
     })
     .expect(400);
+  expect(await User.length).toEqual(3);
 });
 
 test('Should not signup a user with invalid password', async () => {
-  const response = await request(app)
+  await request(app)
     .post('/users')
     .send({
       name: 'Elon',
@@ -64,6 +66,7 @@ test('Should not signup a user with invalid password', async () => {
       password: 'lets'
     })
     .expect(400);
+  expect(await User.length).toEqual(3);
 });
 
 test('Should login existing user', async () => {
@@ -76,32 +79,36 @@ test('Should login existing user', async () => {
     .expect(200);
 
   const user = await User.findById(userOneId);
-  expect(response.body.token).toBe(user.tokens[1].token);
+  expect(response.body.token).toEqual(user.tokens[1].token);
 });
 
 test('Should not login non-existent user', async () => {
-  await request(app)
+  const response = await request(app)
     .post('/users/login')
     .send({
       email: userOne.email,
       password: 'feowjjfvewf'
     })
     .expect(400);
+  expect(response.body).toEqual({});
 });
 
 test('Should get profile for user', async () => {
-  await request(app)
+  const response = await request(app)
     .get('/users/me')
     .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
     .send()
     .expect(200);
+  const user = await User.findById(userOneId);
+  expect(response.body._id).toEqual(user._id.toString());
 });
 
 test('Should not get profile for unauthenticated user', async () => {
-  await request(app)
+  const response = await request(app)
     .delete('/users/me')
     .send()
     .expect(401);
+  expect(response.body).toEqual({ error: 'Please authenticate.' });
 });
 
 test('Should delete account for user', async () => {
@@ -120,6 +127,8 @@ test('Should not delete account for unauthenticated user', async () => {
     .delete('/users/me')
     .send()
     .expect(401);
+  const user = await User.findById(userOneId);
+  expect(user).not.toBeNull();
 });
 
 test('Should upload avatar image', async () => {
@@ -148,6 +157,8 @@ test('Should not update invalid user field', async () => {
     .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
     .send({ location: 'Mordor' })
     .expect(400);
+  const user = await User.findById(userOneId);
+  expect(user.location).toEqual(undefined);
 });
 
 test('Should not update user with invalid name', async () => {
@@ -156,6 +167,8 @@ test('Should not update user with invalid name', async () => {
     .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
     .send({ name: '' })
     .expect(400);
+  const user = await User.findById(userOneId);
+  expect(user.name).not.toEqual('');
 });
 
 test('Should not update user with invalid email', async () => {
@@ -164,6 +177,8 @@ test('Should not update user with invalid email', async () => {
     .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
     .send({ email: 'jiofawefj' })
     .expect(400);
+  const user = await User.findById(userOneId);
+  expect(user.email).not.toEqual('jiofawefj');
 });
 
 test('Should not update user with invalid password', async () => {
@@ -172,6 +187,8 @@ test('Should not update user with invalid password', async () => {
     .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
     .send({ password: 'eijfsadovhjepasswordfjioeravjiao' })
     .expect(400);
+  const user = await User.findById(userOneId);
+  expect(user.password).not.toEqual('eijfsadovhjepasswordfjioeravjiao');
 });
 
 test('Should not update invalid user if unauthenticated', async () => {
@@ -179,4 +196,6 @@ test('Should not update invalid user if unauthenticated', async () => {
     .patch('/users/me')
     .send({ name: 'John' })
     .expect(401);
+  const user = await User.findById(userOneId);
+  expect(user.name).not.toEqual('John');
 });

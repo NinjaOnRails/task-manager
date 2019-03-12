@@ -36,12 +36,20 @@ const taskOne = {
   owner: userOneId
 };
 
+const taskFour = {
+  _id: new mongoose.Types.ObjectId(),
+  description: 'Fourth task',
+  completed: true,
+  owner: userOneId
+};
+
 const taskTwo = {
   _id: new mongoose.Types.ObjectId(),
   description: 'Second task',
   completed: true,
   owner: userOneId
 };
+
 const taskThree = {
   _id: new mongoose.Types.ObjectId(),
   description: 'Third task',
@@ -57,6 +65,7 @@ const setupDatabase = async () => {
   await new Task(taskOne).save();
   await new Task(taskTwo).save();
   await new Task(taskThree).save();
+  await new Task(taskFour).save();
 };
 
 module.exports = {
@@ -67,5 +76,6 @@ module.exports = {
   taskOne,
   taskTwo,
   taskThree,
+  taskFour,
   setupDatabase
 };
